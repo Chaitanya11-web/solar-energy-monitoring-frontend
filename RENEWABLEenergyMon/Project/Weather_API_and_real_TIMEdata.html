@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>SolarSmart | Intelligent Solar + Weather Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="umg.css">
+</head>
+<body class="default-bg">
+<div class="dashboard-container">
+    <div class="hero">
+        <div class="title-section">
+            <h1>
+                <i class="fas fa-solar-panel"></i> SolarSmart
+            </h1>
+            <div class="sub">AI-powered energy intelligence · real-time insights + weather integration</div>
+        </div>
+        <div class="refresh-area">
+            <div class="auto-text"><span class="live-badge"></span> LIVE · auto sync</div>
+            <button id="refreshBtn"><i class="fas fa-sync-alt"></i> Refresh now</button>
+        </div>
+    </div>
+
+    <!-- KPI Row -->
+    <div class="kpi-row">
+        <div class="kpi-card">
+            <div class="kpi-icon"><i class="fas fa-bolt"></i></div>
+            <div class="kpi-label">Current Power</div>
+            <div class="kpi-value" id="kpiPower">— <span class="kpi-unit">kW</span></div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon"><i class="fas fa-charging-station"></i></div>
+            <div class="kpi-label">Solar Yield</div>
+            <div class="kpi-value" id="kpiYield">— <span class="kpi-unit">kWh</span></div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon"><i class="fas fa-temperature-high"></i></div>
+            <div class="kpi-label">Panel Temp</div>
+            <div class="kpi-value" id="kpiTemp">— <span class="kpi-unit">°C</span></div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon"><i class="fas fa-smile"></i></div>
+            <div class="kpi-label">System Health</div>
+            <div class="kpi-value" id="kpiHealth">—</div>
+        </div>
+    </div>
+
+    <!-- Detailed Blocks Grid -->
+    <div class="details-grid" id="detailsGrid"></div>
+
+    <!-- Raw Data Toggle -->
+    <div class="info-block" style="margin-top: 1.5rem;">
+        <div class="block-header">
+            <i class="fas fa-code"></i>
+            <h3>📡 Raw API Data</h3>
+        </div>
+        <div class="block-content">
+            <div class="raw-data-toggle" onclick="toggleRawData()">
+                <i class="fas fa-chevron-down"></i> View Raw Response
+            </div>
+            <div id="rawDataContent" class="raw-data-content"></div>
+        </div>
+    </div>
+
+    <footer>
+        <i class="fas fa-cloud-sun"></i> Weather-enhanced solar forecasting | Data refreshes every 5s
+    </footer>
+</div>
+
+<script>
+    // ==================== WEATHER API CONFIGURATION ====================
+    const WEATHER_API_KEY = "bda0ef41ab934c00abe164419262403";
+    let energyChart = null;
+    let lastFetchTime = null;
+    let currentWeatherData = null;
+
+    // ==================== WEATHER FUNCTIONS ====================
+    async function fetchWeatherData() {
+        try {
+            const position = await getCurrentPosition();
+            const { latitude, longitude } = position.coords;
+            const url = `https://api.weatherapi.com/v1/current.json?key=${WEATHER_API_KEY}&q=${latitude},${longitude}&aqi=yes`;
+            const response = await fetch(url);
+            const data = await response.json();
+            if (!data.error) {
+                currentWeatherData = data;
+                return data;
+            }
+        } catch (error) {
+            console.log('Location failed, trying default city');
+        }
+        
+        try {
+            const url = `https://api.weatherapi.com/v1/current.json?key=${WEATHER_API_KEY}&q=London&aqi=yes`;
+            const response = await fetch(url);
+            const data = await response.json();
+            if (!data.error) {
+                currentWeatherData = data;
+                return data;
+            }
+        } catch (error) {
+            console.error('Weather fetch error:', error);
+        }
+        return null;
+    }
+
+    function getCurrentPosition() {
+        return new Promise((resolve, reject) => {
+            if (!navigator.geolocation) reject(new Error('Geolocation not supported'));
+            navigator.geolocation.getCurrentPosition(resolve, reject);
+        });
+    }
+
+    function getWeatherIcon(condition, isDay) {
+        const conditionLower = condition.toLowerCase();
+        if (conditionLower.includes('sun') || conditionLower.includes('clear')) {
+            return isDay ? '<i class="fas fa-sun" style="color: #ffd966;"></i>' : '<i class="fas fa-moon" style="color: #c0c0c0;"></i>';
+        }
+        if (conditionLower.includes('cloud')) return '<i class="fas fa-cloud" style="color: #b0c4de;"></i>';
+        if (conditionLower.includes('rain')) return '<i class="fas fa-cloud-rain" style="color: #6c91b2;"></i>';
+        return '<i class="fas fa-cloud-sun"></i>';
+    }
+
+    function updateBackgroundTheme(condition) {
+        const conditionLower = condition.toLowerCase();
+        document.body.classList.remove('sunny-bg', 'cloudy-bg', 'rainy-bg', 'default-bg');
+        
+        if (conditionLower.includes('sun') || conditionLower.includes('clear')) {
+            document.body.classList.add('sunny-bg');
+        } else if (conditionLower.includes('cloud')) {
+            document.body.classList.add('cloudy-bg');
+        } else if (conditionLower.includes('rain')) {
+            document.body.classList.add('rainy-bg');
+        } else {
+            document.body.classList.add('default-bg');
+        }
+    }
+
+    function createWeatherEffects(condition) {
+        document.querySelectorAll('.weather-bg-element').forEach(el => el.remove());
+        const conditionLower = condition.toLowerCase();
+        
+        if (conditionLower.includes('sun') || conditionLower.includes('clear')) {
+            const sun = document.createElement('div');
+            sun.className = 'weather-bg-element sun-element';
+            document.body.appendChild(sun);
+        } else if (conditionLower.includes('cloud')) {
+            for (let i = 0; i < 4; i++) {
+                const cloud = document.createElement('div');
+                cloud.className = 'weather-bg-element cloud-element';
+                cloud.style.width = `${100 + Math.random() * 100}px`;
+                cloud.style.height = `${50 + Math.random() * 40}px`;
+                cloud.style.top = `${Math.random() * 30}%`;
+                cloud.style.animationDuration = `${30 + Math.random() * 20}s`;
+                cloud.style.animationDelay = `${Math.random() * 10}s`;
+                cloud.style.opacity = 0.6 + Math.random() * 0.3;
+                document.body.appendChild(cloud);
+            }
+        } else if (conditionLower.includes('rain')) {
+            for (let i = 0; i < 80; i++) {
+                const drop = document.createElement('div');
+                drop.className = 'weather-bg-element rain-drop';
+                drop.style.left = `${Math.random() * 100}%`;
+                drop.style.animationDuration = `${0.8 + Math.random() * 0.7}s`;
+                drop.style.animationDelay = `${Math.random() * 5}s`;
+                document.body.appendChild(drop);
+            }
+        }
+    }
+
+    // ==================== SOLAR DASHBOARD FUNCTIONS ====================
+    function toggleRawData() {
+        const rawDiv = document.getElementById('rawDataContent');
+        rawDiv.classList.toggle('show');
+    }
+
+    function parseSolarData(rawText) {
+        const result = {
+            raw: rawText,
+            powerKw: null,
+            energyKwh: null,
+            temperature: null,
+            efficiency: null,
+            co2Saved: null,
+            irradiance: null,
+            extraInsights: [],
+            rawLines: rawText.split(/\r?\n/).filter(l => l.trim().length > 0)
+        };
+
+        const patterns = {
+            power: /power\s*output\s*:?\s*([\d\.]+)\s*kw/i,
+            energy: /energy\s*yield\s*:?\s*([\d\.]+)\s*kwh/i,
+            temperature: /panel\s*temp(?:erature)?\s*:?\s*([\d\.]+)\s*°?c/i,
+            efficiency: /efficiency\s*:?\s*([\d\.]+)\s*%/i,
+            co2: /co2\s*saved\s*:?\s*([\d\.]+)\s*kg/i,
+            irradiance: /irradiance\s*:?\s*([\d\.]+)\s*w\/m²/i,
+        };
+
+        for (let line of result.rawLines) {
+            let match;
+            if ((match = line.match(patterns.power))) result.powerKw = parseFloat(match[1]);
+            else if ((match = line.match(patterns.energy))) result.energyKwh = parseFloat(match[1]);
+            else if ((match = line.match(patterns.temperature))) result.temperature = parseFloat(match[1]);
+            else if ((match = line.match(patterns.efficiency))) result.efficiency = parseFloat(match[1]);
+            else if ((match = line.match(patterns.co2))) result.co2Saved = parseFloat(match[1]);
+            else if ((match = line.match(patterns.irradiance))) result.irradiance = parseFloat(match[1]);
+        }
+
+        if (result.powerKw === null) {
+            const anyPower = rawText.match(/(\d+(?:\.\d+)?)\s*kw/i);
+            if (anyPower) result.powerKw = parseFloat(anyPower[1]);
+        }
+        if (result.energyKwh === null) {
+            const anyEnergy = rawText.match(/(\d+(?:\.\d+)?)\s*kwh/i);
+            if (anyEnergy) result.energyKwh = parseFloat(anyEnergy[1]);
+        }
+        if (result.temperature === null) {
+            const anyTemp = rawText.match(/(\d+(?:\.\d+)?)\s*°?c/i);
+            if (anyTemp) result.temperature = parseFloat(anyTemp[1]);
+        }
+        if (result.efficiency === null) result.efficiency = 18.7;
+        if (result.co2Saved === null) result.co2Saved = 3.2;
+        if (result.irradiance === null) result.irradiance = 780;
+
+        return result;
+    }
+
+    function renderDashboard(parsed, weather) {
+        // Update KPI cards
+        document.getElementById("kpiPower").innerHTML = `${parsed.powerKw !== null ? parsed.powerKw.toFixed(1) : '—'} <span class="kpi-unit">kW</span>`;
+        document.getElementById("kpiYield").innerHTML = `${parsed.energyKwh !== null ? parsed.energyKwh.toFixed(1) : '—'} <span class="kpi-unit">kWh</span>`;
+        document.getElementById("kpiTemp").innerHTML = `${parsed.temperature !== null ? parsed.temperature.toFixed(1) : '—'} <span class="kpi-unit">°C</span>`;
+        
+        let healthStatus = "Optimal ⚡";
+        if (parsed.powerKw !== null && parsed.powerKw < 1.5) healthStatus = "Moderate";
+        if (parsed.powerKw !== null && parsed.powerKw < 0.8) healthStatus = "Needs Attention";
+        document.getElementById("kpiHealth").innerHTML = healthStatus;
+
+        const detailsGrid = document.getElementById("detailsGrid");
+        detailsGrid.innerHTML = "";
+
+        // Block 1: Energy Performance
+        const block1 = document.createElement("div");
+block1.className = "info-block";
+block1.innerHTML = `
+    <div class="block-header">
+        <i class="fas fa-chart-line"></i>
+        <h3>⚡ Energy Performance</h3>
+    </div>
+    <div class="block-content-balanced">
+        <div class="metrics-grid">
+            <div class="metric-item">
+                <div class="metric-icon-small">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <div class="metric-info">
+                    <span class="metric-label">Instant Power</span>
+                    <span class="metric-value">${parsed.powerKw !== null ? parsed.powerKw.toFixed(2) : '—'} <span class="unit">kW</span></span>
+                </div>
+            </div>
+            
+            <div class="metric-item">
+                <div class="metric-icon-small">
+                    <i class="fas fa-solar-panel"></i>
+                </div>
+                <div class="metric-info">
+                    <span class="metric-label">Energy Today</span>
+                    <span class="metric-value">${parsed.energyKwh !== null ? parsed.energyKwh.toFixed(2) : '—'} <span class="unit">kWh</span></span>
+                </div>
+            </div>
+            
+            <div class="metric-item">
+                <div class="metric-icon-small">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="metric-info">
+                    <span class="metric-label">Efficiency</span>
+                    <span class="metric-value">${parsed.efficiency.toFixed(1)} <span class="unit">%</span></span>
+                </div>
+            </div>
+            
+            <div class="metric-item">
+                <div class="metric-icon-small">
+                    <i class="fas fa-sun"></i>
+                </div>
+                <div class="metric-info">
+                    <span class="metric-label">Irradiance</span>
+                    <span class="metric-value">${Math.round(parsed.irradiance)} <span class="unit">W/m²</span></span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="co2-badge">
+            <i class="fas fa-leaf"></i>
+            <span>🌱 CO₂ saved: ${parsed.co2Saved.toFixed(1)} kg</span>
+        </div>
+    </div>
+`;
+detailsGrid.appendChild(block1);
+        // Block 2: Weather Information
+        const block2 = document.createElement("div");
+        block2.className = "info-block";
+        block2.style.borderLeftColor = "#ffd966";
+        
+        let weatherHtml = '';
+        if (weather && weather.current) {
+            const w = weather.current;
+            const loc = weather.location;
+            const cloudImpact = w.cloud > 70 ? 'Low generation' : (w.cloud > 40 ? 'Moderate' : 'Optimal');
+            weatherHtml = `
+                <div class="block-content">
+                    <div class="suggestion-card" style="padding: 0.6rem;">
+                        <div class="weather-badge"><i class="fas fa-map-marker-alt"></i> ${loc.name}, ${loc.country}</div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin: 0.5rem 0;">
+                            <div style="font-size: 1.8rem;">${getWeatherIcon(w.condition.text, w.is_day)}</div>
+                            <div style="font-size: 1.5rem; font-weight: 800;">${Math.round(w.temp_c)}°C</div>
+                        </div>
+                        <div style="text-align: center; margin-bottom: 0.5rem; font-size: 0.8rem;">${w.condition.text}</div>
+                        <div class="metric-row"><span class="metric-label">💧 Humidity</span><span class="metric-value">${w.humidity}%</span></div>
+                        <div class="metric-row"><span class="metric-label">🌬️ Wind</span><span class="metric-value">${w.wind_kph} km/h</span></div>
+                        <div class="metric-row"><span class="metric-label">👁️ Visibility</span><span class="metric-value">${w.vis_km} km</span></div>
+                        <div class="best-time">☀️ Solar Impact: ${cloudImpact}</div>
+                    </div>
+                </div>
+            `;
+        } else {
+            weatherHtml = `<div class="block-content"><div class="suggestion-card">⚠️ Weather data unavailable</div></div>`;
+        }
+        block2.innerHTML = `<div class="block-header"><i class="fas fa-cloud-sun"></i><h3>🌤️ Weather</h3></div>${weatherHtml}`;
+        detailsGrid.appendChild(block2);
+const block3 = document.createElement("div");
+block3.className = "info-block";
+let suggestionText = "Use light appliances today";
+let weatherText = "Current conditions";
+let isOvercast = parsed.raw.includes('धूप कम');
+if (isOvercast) {
+    suggestionText = "धूप कम है। हल्के उपकरण का उपयोग करें।";
+    weatherText = "☁️ Overcast";
+} else {
+    weatherText = "☀️ Sunny";
+}
+
+block3.innerHTML = `
+    <div class="block-header"><i class="fas fa-lightbulb"></i><h3>💡 Smart Suggestion</h3></div>
+    <div class="block-content">
+        <div class="suggestion-card-balanced">
+            <!-- Weather & Suggestion Section -->
+            <div class="weather-suggestion-section">
+                <div class="weather-badge-balanced ${isOvercast ? 'overcast' : 'sunny'}">
+                    <i class="fas ${isOvercast ? 'fa-cloud-rain' : 'fa-sun'}"></i>
+                    <span>${weatherText}</span>
+                </div>
+                <div class="suggestion-text-balanced">
+                    <i class="fas fa-microphone-alt"></i>
+                    <div class="suggestion-content">
+                        <div class="hint-text">${suggestionText}</div>
+                        <div class="eng-hint">${isOvercast ? "Less sunlight today" : "Perfect solar conditions"}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Metrics Grid -->
+            <div class="metrics-grid-balanced">
+                <div class="metric-card-balanced">
+                    <i class="fas fa-solar-panel"></i>
+                    <div class="metric-info-balanced">
+                        <span class="metric-value-balanced">${isOvercast ? '72' : '85'}%</span>
+                        <span class="metric-label-balanced">Solar Efficiency</span>
+                    </div>
+                </div>
+                <div class="metric-card-balanced">
+                    <i class="fas fa-rupee-sign"></i>
+                    <div class="metric-info-balanced">
+                        <span class="metric-value-balanced">₹${isOvercast ? '28' : '45'}</span>
+                        <span class="metric-label-balanced">Today's Savings</span>
+                    </div>
+                </div>
+                <div class="metric-card-balanced">
+                    <i class="fas fa-leaf"></i>
+                    <div class="metric-info-balanced">
+                        <span class="metric-value-balanced">${isOvercast ? '1.4' : '2.3'} kg</span>
+                        <span class="metric-label-balanced">CO₂ Offset</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Peak Hours Info -->
+            <div class="peak-info-balanced">
+                <i class="fas fa-clock"></i>
+                <span>Best time for heavy appliances: <strong>12:00 PM - 3:00 PM</strong></span>
+                <i class="fas fa-bolt"></i>
+            </div>
+        </div>
+    </div>
+`;
+
+detailsGrid.appendChild(block3);
+                // Block 4: Device Usage
+// Block 4: Device Usage
+const block4 = document.createElement("div");
+block4.className = "info-block";
+const deviceMatches = parsed.raw.match(/(Fan|TV|Water Pump)\s*→\s*(\d+)/g);
+let deviceHtml = '';
+if (deviceMatches) {
+    deviceHtml = '<div class="device-grid-enhanced">';
+    deviceMatches.forEach(match => {
+        const [device, hours] = match.split('→');
+        let icon = 'fa-fan';
+        let deviceLabel = 'Fan';
+        if (device.includes('TV')) {
+            icon = 'fa-tv';
+            deviceLabel = 'TV';
+        }
+        if (device.includes('Water')) {
+            icon = 'fa-water';
+            deviceLabel = 'Water Pump';
+        }
+        
+        // Calculate usage percentage (assuming max 8 hours for visual indicator)
+        const usageHours = parseInt(hours.trim());
+        const usagePercentage = Math.min((usageHours / 8) * 100, 100);
+        
+        deviceHtml += `
+            <div class="device-card-enhanced">
+                <div class="device-icon-enhanced">
+                    <i class="fas ${icon}"></i>
+                </div>
+                <div class="device-info-enhanced">
+                    <div class="device-name-enhanced">${deviceLabel}</div>
+                    <div class="device-usage-bar">
+                        <div class="usage-bar-fill" style="width: ${usagePercentage}%"></div>
+                    </div>
+                    <div class="device-hours-enhanced">${hours.trim()} hours today</div>
+                </div>
+            </div>
+        `;
+    });
+    deviceHtml += '</div>';
+} else {
+    deviceHtml = '<div class="no-data-message"><i class="fas fa-info-circle"></i><p>No recommendations available</p></div>';
+}
+block4.innerHTML = `
+    <div class="block-header"><i class="fas fa-microchip"></i><h3>⚡ Device Usage</h3></div>
+    <div class="block-content-enhanced">${deviceHtml}</div>
+`;
+detailsGrid.appendChild(block4);
+
+
+        // Block 5: System Alert
+const block5 = document.createElement("div");
+block5.className = "info-block";
+const productionDrop = parsed.raw.match(/(-?\d+(?:\.\d+)?)%\s*कम/);
+let alertHtml = '';
+if (productionDrop || (parsed.powerKw !== null && parsed.powerKw < 1.5)) {
+    const dropValue = productionDrop ? productionDrop[1] : '29.4';
+    alertHtml = `
+        <div class="alert-card">
+            <div class="alert-header">
+                <div class="alert-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="alert-status">Critical Alert</div>
+            </div>
+            <div class="alert-body">
+                <div class="alert-title-enhanced">⚠️ Output Degradation Detected</div>
+                <div class="production-metrics">
+                    <div class="production-drop-enhanced">
+                        <span class="drop-value">${dropValue}%</span>
+                        <span class="drop-label">Production Drop</span>
+                    </div>
+                    <div class="trend-indicator">
+                        <i class="fas fa-arrow-down"></i>
+                        <span>Declining Trend</span>
+                    </div>
+                </div>
+                <div class="alert-message">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Low output detected - System efficiency impacted</span>
+                </div>
+                <div class="alert-suggestion">
+                    <i class="fas fa-tools"></i>
+                    <span>Possible panel tilt issue or shading detected</span>
+                </div>
+                <div class="action-buttons">
+                    <button class="action-btn primary">
+                        <i class="fas fa-chart-line"></i> View Details
+                    </button>
+                    <button class="action-btn secondary">
+                        <i class="fas fa-bell-slash"></i> Dismiss
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+} else {
+    alertHtml = `
+        <div class="no-alert-card">
+            <div class="success-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="success-title">All Systems Normal</div>
+            <div class="success-message">No active alerts detected</div>
+            <div class="system-status">
+                <div class="status-dot"></div>
+                <span>System Operating Normally</span>
+            </div>
+        </div>
+    `;
+}
+block5.innerHTML = `
+    <div class="block-header"><i class="fas fa-exclamation-triangle"></i><h3>⚠️ System Alert</h3></div>
+    <div class="block-content-beautiful">${alertHtml}</div>
+`;
+detailsGrid.appendChild(block5);
+
+        // Block 6: Predictions & Analytics with Chart
+        const block6 = document.createElement("div");
+        block6.className = "info-block";
+        const productionMatch = parsed.raw.match(/(\d+(?:\.\d+)?)\s*kWh/);
+        const batteryMatch = parsed.raw.match(/(\d+)%\s*रहने/);
+        let tomorrowProduction = productionMatch ? productionMatch[1] : (parsed.energyKwh ? parsed.energyKwh.toFixed(1) : '1.99');
+        
+        // Adjust prediction based on weather if available
+        if (weather && weather.current) {
+            const cloudFactor = weather.current.cloud > 70 ? 0.5 : weather.current.cloud > 40 ? 0.75 : 1;
+            tomorrowProduction = (parseFloat(tomorrowProduction) * cloudFactor).toFixed(1);
+        }
+        
+        block6.innerHTML = `
+            <div class="block-header"><i class="fas fa-chart-line"></i><h3>📈 Predictions</h3></div>
+            <div class="block-content">
+                <div class="prediction-stats">
+                    <div class="prediction-card">
+                        <div style="font-size:0.6rem;">Tomorrow's Forecast</div>
+                        <div class="prediction-value">${tomorrowProduction} kWh</div>
+                    </div>
+                    <div class="prediction-card">
+                        <div style="font-size:0.6rem;">Evening Battery</div>
+                        <div class="prediction-value">${batteryMatch ? batteryMatch[1] : '56'}%</div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="energyChart"></canvas>
+                </div>
+                <div style="font-size:0.65rem; text-align:center; margin-top:0.4rem;">
+                    <i class="fas fa-chart-line"></i> Based on weather & historical data
+                </div>
+            </div>
+        `;
+        detailsGrid.appendChild(block6);
+        
+        // Initialize chart after adding to DOM
+        setTimeout(() => updateChart(parseFloat(tomorrowProduction)), 100);
+
+
+
+        
+
+        
+        // Display raw data
+        document.getElementById('rawDataContent').innerHTML = `<pre style="margin:0; white-space:pre-wrap;">${escapeHtml(parsed.raw)}</pre>`;
+    }
+
+    function updateChart(production) {
+        const canvas = document.getElementById('energyChart');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        const hours = ['6AM', '8AM', '10AM', '12PM', '2PM', '4PM', '6PM'];
+        const productionData = [0.2, 0.8, 1.5, production, production * 0.9, production * 0.6, production * 0.2];
+        
+        if (energyChart) {
+            energyChart.destroy();
+        }
+        
+        energyChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: hours,
+                datasets: [{
+                    label: 'Solar Generation (kW)',
+                    data: productionData,
+                    borderColor: '#ffd966',
+                    backgroundColor: 'rgba(255, 217, 102, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#00d4ff',
+                    pointBorderColor: '#fff',
+                    pointRadius: 3,
+                    pointHoverRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { labels: { color: '#eef5ff', font: { size: 9 } } }
+                },
+                scales: {
+                    y: { 
+                        grid: { color: 'rgba(255,255,255,0.1)' }, 
+                        ticks: { color: '#eef5ff', font: { size: 9 } } 
+                    },
+                    x: { 
+                        grid: { color: 'rgba(255,255,255,0.1)' }, 
+                        ticks: { color: '#eef5ff', font: { size: 9 } } 
+                    }
+                }
+            }
+        });
+    }
+
+    async function loadData() {
+        const refreshBtn = document.getElementById('refreshBtn');
+        try {
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Loading...';
+            refreshBtn.disabled = true;
+            
+            // Fetch both solar and weather data in parallel
+            const [solarResponse, weatherData] = await Promise.all([
+                fetch("https://solar-backend-xv6j.onrender.com/predict"),
+                fetchWeatherData()
+            ]);
+            
+            if (!solarResponse.ok) throw new Error(`HTTP ${solarResponse.status}`);
+            
+            const solarData = await solarResponse.json();
+            lastFetchTime = new Date();
+            const parsedData = parseSolarData(solarData.output || solarData);
+            
+            // Update weather background and effects if weather data available
+            if (weatherData && weatherData.current) {
+                updateBackgroundTheme(weatherData.current.condition.text);
+                createWeatherEffects(weatherData.current.condition.text);
+            }
+            
+            renderDashboard(parsedData, weatherData);
+            
+            const lastUpdateSpan = document.getElementById('lastUpdate');
+            if (lastUpdateSpan) lastUpdateSpan.innerHTML = lastFetchTime.toLocaleTimeString();
+            
+        } catch (error) {
+            console.error('Error:', error);
+            const fallbackParsed = parseSolarData("Power Output: 3.82 kW\nEnergy Yield: 11.4 kWh\nPanel Temperature: 46.2°C\nEfficiency: 19.2%\nCO2 Saved: 5.8 kg\nIrradiance: 712 W/m²");
+            renderDashboard(fallbackParsed, null);
+        } finally {
+            refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh now';
+            refreshBtn.disabled = false;
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Add last update display
+    const statsRow = document.createElement('div');
+    statsRow.style.cssText = 'display: flex; justify-content: flex-end; margin-bottom: 1rem;';
+    statsRow.innerHTML = `<div style="background: rgba(0,31,75,0.5); padding: 0.3rem 1rem; border-radius: 20px; font-size: 0.7rem;">Last Update: <span id="lastUpdate">—</span></div>`;
+    document.querySelector('.hero').appendChild(statsRow);
+
+    document.getElementById("refreshBtn").addEventListener("click", () => loadData());
+    
+    // Auto refresh every 5 seconds
+    setInterval(() => loadData(), 5000);
+    
+    // Initial load
+    loadData();
+</script>
+</body>
+</html>

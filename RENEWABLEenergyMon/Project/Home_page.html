@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>🌱 MicroGrid Guardian | AI Renewable Energy Monitoring</title>
+  <!-- Google Fonts + Font Awesome -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800;14..32,900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Swiper CSS for slider -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #EFF7E6;
+      color: #1A3B2F;
+      overflow-x: hidden;
+    }
+
+    /* updated color variables — fresh greens, less white */
+    :root {
+      --primary-deep: #1F5E3A;
+      --primary-bright: #2F855A;
+      --accent-moss: #94B082;
+      --accent-sage: #C3D7B2;
+      --neutral-cream: #FAF7EF;
+      --neutral-stone: #E7EAD8;
+      --shadow-sm: 0 8px 20px rgba(31, 94, 58, 0.08);
+      --shadow-md: 0 15px 30px rgba(31, 94, 58, 0.12);
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 48px;
+    }
+
+    /* background shapes fresh */
+    .bg-blur-circle {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(100px);
+      z-index: -1;
+      opacity: 0.35;
+      pointer-events: none;
+    }
+    .circle1 {
+      width: 500px;
+      height: 500px;
+      background: #BFDBAF;
+      top: -150px;
+      left: -150px;
+    }
+    .circle2 {
+      width: 600px;
+      height: 600px;
+      background: #8DBF6E;
+      bottom: -200px;
+      right: -150px;
+    }
+
+    /* ----- HEADER ATTRACTIVE ----- */
+    .glass-nav {
+      background: rgba(250, 247, 239, 0.92);
+      backdrop-filter: blur(10px);
+      border-radius: 0 0 28px 28px;
+      margin-bottom: 32px;
+      box-shadow: var(--shadow-sm);
+      border-bottom: 1px solid rgba(47, 133, 90, 0.2);
+    }
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 0;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo-icon {
+      background: linear-gradient(135deg, #1F5E3A, #3D9B6C);
+      width: 52px;
+      height: 52px;
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.9rem;
+      color: white;
+      box-shadow: 0 6px 14px rgba(31,94,58,0.3);
+    }
+    .logo-text {
+      font-size: 1.8rem;
+      font-weight: 800;
+      background: linear-gradient(125deg, #1F5E3A, #42855E);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      letter-spacing: -0.5px;
+    }
+    .nav-links {
+      display: flex;
+      gap: 38px;
+      list-style: none;
+    }
+    .nav-links a {
+      text-decoration: none;
+      font-weight: 600;
+      color: #2A6240;
+      transition: 0.2s;
+      font-size: 1rem;
+    }
+    .nav-links a:hover {
+      color: #1F5E3A;
+      border-bottom: 2px solid #1F5E3A;
+      padding-bottom: 4px;
+    }
+    .nav-cta {
+      background: #1F5E3A;
+      padding: 10px 24px;
+      border-radius: 40px;
+      color: white !important;
+      transition: all 0.2s;
+    }
+    .nav-cta:hover {
+      background: #2F855A;
+      transform: scale(1.02);
+      border-bottom: none !important;
+    }
+
+    /* HERO section with left slider */
+    .hero-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 48px;
+      margin: 40px 0 80px;
+      align-items: center;
+    }
+    .hero-left-slider {
+      flex: 1.1;
+      min-width: 280px;
+    }
+    .hero-right-text {
+      flex: 1;
+    }
+    .hero-badge {
+      background: rgba(47, 133, 90, 0.12);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 20px;
+      border-radius: 60px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: #1F5E3A;
+      margin-bottom: 24px;
+      border: 1px solid #C3D7B2;
+    }
+    .hero-right-text h1 {
+      font-size: 3.5rem;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 24px;
+      color: #1A3B2F;
+    }
+    .highlight {
+      color: #2F855A;
+      background: linear-gradient(120deg, #E3F0DA, #D0E6C2);
+      padding: 0 12px;
+      display: inline-block;
+      border-radius: 40px;
+    }
+    .hero-right-text p {
+      font-size: 1.1rem;
+      color: #426B50;
+      line-height: 1.5;
+      margin-bottom: 32px;
+    }
+    .hero-stats {
+      display: flex;
+      gap: 32px;
+      margin-top: 20px;
+    }
+    .stat-mini {
+      display: flex;
+      flex-direction: column;
+    }
+    .stat-number-mini {
+      font-size: 1.9rem;
+      font-weight: 800;
+      color: #1F5E3A;
+    }
+
+    /* Swiper slider styling — no rounding edges, sharp & modern */
+    .swiper {
+      width: 100%;
+      height: 380px;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+    }
+    .swiper-slide {
+      background: #EFF3E8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .swiper-slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .slide-caption {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+      color: white;
+      padding: 20px 20px 12px;
+      font-weight: 600;
+    }
+
+    /* Feature Cards — less rounded (12px radius) and distinct green backgrounds */
+    .section-title {
+      text-align: center;
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin: 60px 0 12px;
+      color: #1A3B2F;
+    }
+    .section-sub {
+      text-align: center;
+      color: #58856B;
+      margin-bottom: 50px;
+      font-size: 1.1rem;
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 32px;
+      margin: 30px 0 70px;
+    }
+    .feature-card {
+      background: #F4F9EF;
+      border-radius: 20px;
+      padding: 32px 28px;
+      transition: all 0.3s ease;
+      border: 1px solid #DAE9CE;
+      box-shadow: var(--shadow-sm);
+    }
+    .feature-card:hover {
+      transform: translateY(-6px);
+      background: #FFFFFF;
+      border-color: #9FC18B;
+      box-shadow: 0 20px 28px -12px rgba(31,94,58,0.2);
+    }
+    .feature-icon-circle {
+      background: #C3E0B1;
+      width: 70px;
+      height: 70px;
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 28px;
+      font-size: 2rem;
+      color: #1F5E3A;
+    }
+    .feature-card h3 {
+      font-size: 1.6rem;
+      margin-bottom: 12px;
+      color: #1F5E3A;
+    }
+
+    /* showcase image points: gallery style with images */
+    .showcase {
+      background: #E1EED5;
+      border-radius: 28px;
+      margin: 50px 0;
+      padding: 50px 40px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 40px;
+      align-items: center;
+    }
+    .showcase-text {
+      flex: 1;
+    }
+    .showcase-gallery {
+      flex: 1;
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .gallery-item {
+      background: #FEFCF5;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.05);
+      flex: 1;
+      min-width: 130px;
+      text-align: center;
+      padding: 20px 12px;
+      border: 1px solid #BDD9AB;
+    }
+    .gallery-item img {
+      width: 85px;
+      height: 85px;
+      object-fit: contain;
+      margin-bottom: 10px;
+    }
+
+    /* mission block distinct green */
+    .mission-block {
+      background: #DAEACE;
+      border-radius: 28px;
+      padding: 48px;
+      margin: 48px 0;
+    }
+    .mission-inner {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 40px;
+    }
+    .mission-img {
+      flex: 1;
+      text-align: center;
+    }
+    .mission-img img {
+      border-radius: 24px;
+      width: 100%;
+      max-width: 300px;
+      box-shadow: var(--shadow-md);
+      border: 3px solid #FEFCF5;
+    }
+    .mission-text {
+      flex: 2;
+    }
+
+    /* three info panels (non white, using sage and cream) */
+    .info-panels {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 28px;
+      margin: 55px 0;
+    }
+    .info-panel {
+      flex: 1;
+      background: #F8FBF2;
+      border-radius: 20px;
+      padding: 34px 28px;
+      border-left: 6px solid #2F855A;
+      box-shadow: var(--shadow-sm);
+    }
+    .info-panel i {
+      font-size: 2.2rem;
+      color: #1F5E3A;
+      margin-bottom: 18px;
+    }
+
+    /* CTA button */
+    .cta-giant {
+      text-align: center;
+      margin: 50px 0 80px;
+    }
+    .btn-main {
+      background: linear-gradient(115deg, #1F5E3A, #358558);
+      border: none;
+      padding: 20px 56px;
+      font-size: 1.5rem;
+      font-weight: 700;
+      border-radius: 56px;
+      color: white;
+      display: inline-flex;
+      align-items: center;
+      gap: 18px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      box-shadow: 0 20px 30px -8px rgba(31,94,58,0.4);
+      text-decoration: none;
+    }
+    .btn-main:hover {
+      transform: scale(1.02);
+      background: linear-gradient(115deg, #2A7248, #4CAA74);
+      box-shadow: 0 28px 38px -10px rgba(31,94,58,0.5);
+    }
+
+    /* sustainability row — no rounding extremes */
+    .sustainability-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 28px;
+      margin: 50px 0;
+      background: #EFF1E5;
+      border-radius: 28px;
+      padding: 50px 40px;
+    }
+    .sustain-card {
+      flex: 1;
+      background: #FFFFFFDD;
+      border-radius: 20px;
+      padding: 32px 24px;
+      text-align: center;
+      backdrop-filter: blur(2px);
+      border: 1px solid #CBE0BC;
+    }
+
+    /* footer modern */
+    .footer {
+      background: #1F4535;
+      color: #DFF0D8;
+      border-radius: 28px 28px 0 0;
+      padding: 50px 40px 30px;
+      margin-top: 70px;
+    }
+
+    @media (max-width: 850px) {
+      .container {
+        padding: 0 24px;
+      }
+      .hero-right-text h1 {
+        font-size: 2.2rem;
+      }
+      .btn-main {
+        padding: 14px 32px;
+        font-size: 1.2rem;
+      }
+      .swiper {
+        height: 280px;
+      }
+    }
+    .toast-notify {
+      animation: fadeInUp 0.3s ease;
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+  </style>
+</head>
+<body>
+<div class="bg-blur-circle circle1"></div>
+<div class="bg-blur-circle circle2"></div>
+
+<div class="glass-nav">
+  <div class="container">
+    <nav>
+      <div class="logo">
+        <div class="logo-icon"><i class="fas fa-solar-panel"></i></div>
+        <div class="logo-text">MicroGrid<span style="font-weight:600">Guardian</span></div>
+      </div>
+      <ul class="nav-links">
+        <li><a href="Weather_API_and_real_TIMEdata.html">Home</a></li>
+        <li><a href="Weather_API_and_real_TIMEdata.html">AI Insights</a></li>
+        <li><a href="Weather_API_and_real_TIMEdata.html">Microgrid Map</a></li>
+        <li><a href="Weather_API_and_real_TIMEdata.html">Community</a></li>
+        <li><a href="Weather_API_and_real_TIMEdata.html" class="nav-cta">Get Started</a></li>
+      </ul>
+    </nav>
+  </div>
+</div>
+
+<div class="container">
+  <!-- Hero with LEFT SLIDER (Swiper) -->
+  <div class="hero-grid">
+    <div class="hero-left-slider">
+      <div class="swiper heroSwiper">
+        <div class="swiper-wrapper">
+          <div class="swiper-slide">
+            <img src="https://www.moserbaersolar.com/wp-content/uploads/2025/03/9v-solar-panel-transforming-energy-540x400.jpeg" alt="Solar farm">
+            <div class="slide-caption">⚡ Solar Array | 125kWp</div>
+          </div>
+          <div class="swiper-slide">
+            <img src="https://images.pexels.com/photos/414837/pexels-photo-414837.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Smart sensors">
+            <div class="slide-caption">📡 IoT Sensor Nodes | ESP32 Mesh</div>
+          </div>
+          <div class="swiper-slide">
+            <img src="https://www.moserbaersolar.com/wp-content/uploads/2025/03/ai-solar-monitoring-dashboard.jpg" alt="AI Dashboard">
+            <div class="slide-caption">🤖 AI Twin | Predictive Analytics</div>
+          </div>
+          <div class="swiper-slide">
+            <img src="https://blog.dishashree.com/wp-content/uploads/2025/03/Real-Time-Solar-Panel-Efficiency-Monitoring-with-React-and-Python-Dishashree.jpeg" alt="Rural microgrid">
+            <div class="slide-caption">🌾 Rural Microgrid | 24/7 Clean Power</div>
+          </div>
+        </div>
+        <div class="swiper-pagination"></div>
+        <div class="swiper-button-next"></div>
+        <div class="swiper-button-prev"></div>
+      </div>
+    </div>
+    <div class="hero-right-text">
+      <div class="hero-badge">
+        <i class="fas fa-microchip"></i> AI-Powered | Smart Village Initiative
+      </div>
+      <h1>Powering the Future with <span class="highlight">Renewable Intelligence</span></h1>
+      <p>Transform rural microgrids into smart, self-healing energy ecosystems. Real‑time monitoring, AI fault detection, and load optimization — all in one platform.</p>
+      <div class="hero-stats">
+        <div class="stat-mini"><span class="stat-number-mini">6.8K+</span><span>Households</span></div>
+        <div class="stat-mini"><span class="stat-number-mini">172t</span><span>CO₂ saved</span></div>
+        <div class="stat-mini"><span class="stat-number-mini">99.4%</span><span>Reliability</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Feature section — crisp radius 20px, different greens -->
+  <div class="section-title">⚡ Intelligence, Engineered for Villages</div>
+  <div class="section-sub">AI + IoT + Edge computing for off-grid resilience</div>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon-circle"><i class="fas fa-chart-line"></i></div>
+      <h3>Real‑time Monitoring</h3>
+      <p>Power (kW), solar yield, panel temp, humidity, irradiance — streamed from ESP32 & INA219 sensors.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon-circle"><i class="fas fa-brain"></i></div>
+      <h3>AI Twin Models</h3>
+      <p>Random Forest power prediction + Isolation Forest detects theft, dust, shading faults in seconds.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon-circle"><i class="fas fa-bolt"></i></div>
+      <h3>Smart Load Balancing</h3>
+      <p>Priority-based relays & peak hour optimization (12PM–3PM) reduce waste by up to 31%.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon-circle"><i class="fas fa-cloud-sun-rain"></i></div>
+      <h3>Weather Fusion</h3>
+      <p>Live weather API integration to predict solar generation and adjust microgrid dispatch.</p>
+    </div>
+  </div>
+
+  <!-- Showcase more image points & hardware stack -->
+  <div class="showcase">
+    <div class="showcase-text">
+      <h2><i class="fas fa-microgrid"></i> From Sensors to Sustainability</h2>
+      <p>Our system uses ESP32 microcontrollers, DHT22, BH1750, MPU6050, and relays to collect granular energy data. AI models analyze tilt, current, temperature and provide instant suggestions.</p>
+      <div style="margin-top: 20px; display: flex; gap: 12px; flex-wrap:wrap;">
+        <span style="background:#2F855A; color:white; padding:8px 20px; border-radius: 40px; font-weight:500;"><i class="fas fa-chart-simple"></i> Random Forest</span>
+        <span style="background:#C3D7B2; color:#1F5E3A; padding:8px 20px; border-radius: 40px;"><i class="fas fa-chart-line"></i> Isolation Forest</span>
+        <span style="background:#E7EAD8; color:#1F5E3A; padding:8px 20px; border-radius: 40px;"><i class="fas fa-microchip"></i> ESP32 Edge</span>
+      </div>
+    </div>
+    <div class="showcase-gallery">
+      <div class="gallery-item"><img src="https://cdn-icons-png.flaticon.com/512/2917/2917995.png" alt="esp32"><p>ESP32 Hub</p></div>
+      <div class="gallery-item"><img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="solar panel"><p>Solar Array</p></div>
+      <div class="gallery-item"><img src="https://cdn-icons-png.flaticon.com/512/2103/2103633.png" alt="AI cloud"><p>AI Edge</p></div>
+      <div class="gallery-item"><img src="https://cdn-icons-png.flaticon.com/512/3523/3523063.png" alt="battery storage"><p>Battery Bank</p></div>
+    </div>
+  </div>
+
+  <!-- Mission with fresh green background (no double white) -->
+  <div class="mission-block">
+    <div class="mission-inner">
+      <div class="mission-img">
+        <img src="https://images.pexels.com/photos/386009/pexels-photo-386009.jpeg?auto=compress&cs=tinysrgb&w=600" alt="rural community">
+      </div>
+      <div class="mission-text">
+        <h2 style="font-size:2rem; color:#1F5E3A;">🌾 Empowering Rural Communities</h2>
+        <p style="font-size:1.05rem; margin: 15px 0; color:#2F5D43;">Our mission is to democratize energy intelligence for off‑grid villages. With predictive analytics and affordable hardware, we bring clean, reliable power to the last mile.</p>
+        <div style="background: #FEF9EC; border-radius: 20px; padding: 20px; margin-top: 15px; border-left: 8px solid #1F5E3A;">
+          <i class="fas fa-hand-holding-heart" style="font-size: 2rem; color:#1F5E3A;"></i> 
+          <span style="font-weight:600; margin-left:12px;">"AI for Good: 172 tons CO₂ saved annually across pilot sites"</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- info panels with fresh greens, no double white -->
+  <div class="info-panels">
+    <div class="info-panel">
+      <i class="fas fa-chart-pie"></i>
+      <h3 style="margin: 12px 0;">Energy Analytics Dashboard</h3>
+      <p>Historical trends, CO₂ savings, efficiency tracking, and predictive output charts. Know your microgrid inside out.</p>
+    </div>
+    <div class="info-panel">
+      <i class="fas fa-robot"></i>
+      <h3 style="margin: 12px 0;">AI Suggestions & Alerts</h3>
+      <p>Detect sensor faults, shading issues or theft (MPU6050 tilt) in real time — proactive recommendations sent to operators.</p>
+    </div>
+    <div class="info-panel">
+      <i class="fas fa-cloud-sun"></i>
+      <h3 style="margin: 12px 0;">Weather Integrated Forecast</h3>
+      <p>Live weather data + solar irradiation modeling to optimize battery charging cycles and load shedding.</p>
+    </div>
+  </div>
+
+  <!-- CTA BUTTON for real-time data, AI, weather -->
+  <div class="cta-giant">
+    <a href="Weather_API_and_real_TIMEdata.html" style="text-decoration: none;">
+      <button id="mainActionButton" class="btn-main">
+        <i class="fas fa-charging-station"></i> Launch Real-Time Data Hub →
+      </button>
+    </a>
+    <p style="margin-top: 20px; color: #2F855A; font-weight: 500;">
+      <i class="fas fa-sync-alt"></i>
+      One-click access to live monitoring, AI suggestions & weather intelligence
+    </p>
+  </div>
+
+  <!-- sustainability row with more images and distinct colors -->
+  <div class="sustainability-row">
+    <div class="sustain-card">
+      <i class="fas fa-microchip" style="font-size: 2.8rem; color:#1F5E3A;"></i>
+      <h3>Hardware Stack</h3>
+      <p>ESP32, INA219, DS18B20, DHT22, BH1750, MPU6050 — total ₹6,250. Open source ready.</p>
+      <img src="https://cdn-icons-png.flaticon.com/512/3183/3183467.png" width="60" style="margin-top:16px; opacity:0.8;" alt="sensors">
+    </div>
+    <div class="sustain-card">
+      <i class="fas fa-chart-line" style="font-size: 2.8rem; color:#1F5E3A;"></i>
+      <h3>Random Forest Predictor</h3>
+      <p>Forecast solar generation 3h ahead with 92% accuracy. Helps in load balancing.</p>
+      <img src="https://cdn-icons-png.flaticon.com/512/2103/2103606.png" width="60" style="margin-top:16px;" alt="AI">
+    </div>
+    <div class="sustain-card">
+      <i class="fas fa-leaf" style="font-size: 2.8rem; color:#1F5E3A;"></i>
+      <h3>Carbon Savings</h3>
+      <p>Each microgrid reduces ~18 tons CO₂/year. Join the sustainable revolution.</p>
+      <img src="https://cdn-icons-png.flaticon.com/512/3246/3246827.png" width="60" style="margin-top:16px;" alt="green">
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="footer-grid" style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 30px;">
+      <div class="footer-col">
+        <h4 style="color:#C3E0B1;">🌱 MicroGrid Guardian</h4>
+        <ul style="list-style:none; margin-top:12px;">
+          <li>Overview</li>
+          <li>Our Solutions</li>
+          <li>AI Models</li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4 style="color:#C3E0B1;">Resources</h4>
+        <ul style="list-style:none;">
+          <li>Blog & Case Studies</li>
+          <li>Hardware Docs</li>
+          <li>API Reference</li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4 style="color:#C3E0B1;">Community</h4>
+        <ul style="list-style:none;">
+          <li>GitHub Repository</li>
+          <li>Smart Village Forum</li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4 style="color:#C3E0B1;">Get in Touch</h4>
+        <p>Learn how to deploy AI microgrid monitoring.</p>
+        <button style="margin-top: 12px; background: #2F855A; border: none; padding: 8px 18px; border-radius: 40px; color:white; font-weight:bold; cursor:pointer;">Explore Now</button>
+      </div>
+    </div>
+    <div class="footer-bottom" style="text-align:center; padding-top:30px; border-top:1px solid #558B6B; margin-top:40px;">
+      <p>⭐ AI Powered Renewable Energy Monitoring System for Microgrid | Smart Villages Project</p>
+      <p>Made with ❤️ for sustainable rural energy | MIT License</p>
+      <div style="margin-top: 10px; font-size: 1.2rem;">
+        <i class="fab fa-github"></i> <i class="fab fa-twitter"></i> <i class="fab fa-linkedin"></i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+<script>
+  // Initialize Swiper slider
+  const swiper = new Swiper('.heroSwiper', {
+    loop: true,
+    autoplay: {
+      delay: 4000,
+      disableOnInteraction: false,
+    },
+    pagination: {
+      el: '.swiper-pagination',
+      clickable: true,
+    },
+    navigation: {
+      nextEl: '.swiper-button-next',
+      prevEl: '.swiper-button-prev',
+    },
+    effect: 'slide',
+    speed: 700,
+  });
+
+  // Optional: Add a click handler for the button if you want additional functionality
+  const btn = document.getElementById('mainActionButton');
+  if (btn) {
+    btn.addEventListener('click', function(e) {
+      // The link will handle navigation automatically
+      // You can add any analytics or tracking here if needed
+      console.log('Navigating to real-time data dashboard...');
+    });
+  }
+</script>
+</body>
+</html>
